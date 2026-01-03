@@ -1,15 +1,31 @@
-
-import './App.css'
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import Features from "./components/Features";
+import Footer from "./components/Footer";
+import DonateFood from "./pages/DonateFood";
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-100">
-      <h1 className="text-4xl font-bold text-green-700">
-        Food Waste Reduction Platform 🌱
-      </h1>
-    </div>
-  )
+    <>
+      <Navbar />
+
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <Hero />
+              <Features />
+            </>
+          }
+        />
+        <Route path="/donate" element={<DonateFood />} />
+      </Routes>
+
+      <Footer />
+    </>
+  );
 }
 
-export default App
-
+export default App;
