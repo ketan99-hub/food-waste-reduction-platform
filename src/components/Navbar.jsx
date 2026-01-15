@@ -30,6 +30,11 @@ export default function Navbar() {
             How it Works
           </a>
 
+          {/* ✅ About added */}
+          <NavLink to="/about" className={linkClass}>
+            About
+          </NavLink>
+
           <NavLink to="/donate" className={linkClass}>
             Donate
           </NavLink>

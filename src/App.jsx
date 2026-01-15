@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import Features from "./components/Features";
 import Footer from "./components/Footer";
 import DonateFood from "./pages/DonateFood";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -11,16 +12,21 @@ function App() {
       <Navbar />
 
       <Routes>
+         <Route path="/about" element={<About />} />
         <Route
+        
           path="/"
           element={
+            
             <>
+           
               <Hero />
               <Features />
             </>
           }
         />
         <Route path="/donate" element={<DonateFood />} />
+        
       </Routes>
 
       <Footer />

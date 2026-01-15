@@ -52,3 +52,14 @@
 .animate-scroll {
   animation: scroll 30s linear infinite;
 }
+/* ✅ Text size adjust – modern + fallback */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ✅ Backdrop filter – Safari support */
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
