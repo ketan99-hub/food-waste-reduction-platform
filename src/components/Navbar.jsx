@@ -1,7 +1,5 @@
 import { NavLink } from "react-router-dom";
 
-
-
 export default function Navbar() {
   const linkClass = ({ isActive }) =>
     `px-3 py-2 rounded-lg transition ${
@@ -13,7 +11,7 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
+        
         {/* Logo */}
         <NavLink
           to="/"
@@ -28,20 +26,19 @@ export default function Navbar() {
             Home
           </NavLink>
 
-          <a href="/" className="px-3 py-2 hover:text-green-600">
+          <NavLink to="/features" className={linkClass}>
             How it Works
-          </a>
-         <NavLink to="/request-food" className={linkClass}>
-            Request Food
           </NavLink>
-
-
-
-          {/* ✅ About added */}
           <NavLink to="/about" className={linkClass}>
             About
           </NavLink>
 
+
+          <NavLink to="/request-food" className={linkClass}>
+            Request Food
+          </NavLink>
+
+        
           <NavLink to="/donate" className={linkClass}>
             Donate
           </NavLink>
@@ -50,12 +47,7 @@ export default function Navbar() {
             Login
           </NavLink>
         </div>
-
       </div>
-      <NavLink to="/features" className={linkClass}>
-  How it Works
-</NavLink>
-
     </nav>
   );
 }
