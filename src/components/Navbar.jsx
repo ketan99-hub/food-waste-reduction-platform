@@ -45,6 +45,10 @@ export default function Navbar() {
         </div>
 
       </div>
+      <NavLink to="/features" className={linkClass}>
+  How it Works
+</NavLink>
+
     </nav>
   );
 }
