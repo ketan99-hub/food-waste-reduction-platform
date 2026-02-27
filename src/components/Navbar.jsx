@@ -1,5 +1,7 @@
 import { NavLink } from "react-router-dom";
 
+
+
 export default function Navbar() {
   const linkClass = ({ isActive }) =>
     `px-3 py-2 rounded-lg transition ${
@@ -26,9 +28,14 @@ export default function Navbar() {
             Home
           </NavLink>
 
-          <a href="Features" className="px-3 py-2 hover:text-green-600">
+          <a href="/" className="px-3 py-2 hover:text-green-600">
             How it Works
           </a>
+         <NavLink to="/request-food" className={linkClass}>
+            Request Food
+          </NavLink>
+
+
 
           {/* ✅ About added */}
           <NavLink to="/about" className={linkClass}>

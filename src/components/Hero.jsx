@@ -6,7 +6,7 @@ export default function Hero() {
 
   return (
   <section
-  className="relative flex items-center justify-center min-h-screen bg-cover bg-center"
+  className="relative h-screen flex items-center justify-center bg-fixed bg-cover bg-center"
   style={{
     backgroundImage:
       "url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=1950&q=80')",
@@ -65,7 +65,7 @@ export default function Hero() {
           </button>
 
           <button
-            onClick={() => navigate("/request")}
+            onClick={() => navigate("/request-food")}
             className="border border-green-600 text-green-600 px-8 py-4 rounded-xl hover:bg-green-50 hover:scale-105 transition-transform duration-300"
           >
             Request Food
