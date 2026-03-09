@@ -1,7 +1,6 @@
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
 import Features from "../components/Features";
-import Footer from "../components/Footer";
 import RequestCard from "../components/RequestCard";
 import DonationCard from "../components/DonationCard";
 
@@ -56,7 +55,7 @@ const dummyDonations = [
 
 <div className="h-40 bg-blue-500"></div>
       <Features />
-      <Footer />
+    
     </>
   );
 }
