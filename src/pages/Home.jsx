@@ -16,7 +16,7 @@ export default function Home() {
     {
       id: 2,
       name: "Sita",
-      address: "Bandra",
+      address: "Bhandara",
       people_count: 2,
     },
   ];
@@ -37,7 +37,6 @@ export default function Home() {
       <section className="relative z-10 -mt-20 px-6 py-16 bg-transparent">
         <div className="max-w-6xl mx-auto">
 
-<div className="h-40 bg-blue-500"></div>
       <Features />
     
           <h2 className="text-2xl font-bold text-center mb-6  bg-transparent">
