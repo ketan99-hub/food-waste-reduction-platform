@@ -1,22 +1,44 @@
 import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 import { FaUser, FaLock, FaLeaf } from "react-icons/fa";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  if (!email || !password) {
+    alert("Please fill all fields!");
+    return;
+  }
 
-    if (!email || !password) {
-      alert("Please fill all fields!");
-      return;
-    }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    alert(`Login Successful as ${role}`);
-  };
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
+  // Optional: role-based redirect
+  if (role === "donor") {
+    navigate("/donor-dashboard");
+  } else if (role === "ngo") {
+    navigate("/ngo-dashboard");
+  } else if (role === "admin") {
+    navigate("/admin-dashboard");
+  } else {
+    navigate("/request-dashboard");
+  }
+
+alert(`Login Successful as ${role} 🎉`);};
+console.log("URL:", import.meta.env.VITE_SUPABASE_URL);
   return (
     <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-100 via-white to-green-200 px-4">
 

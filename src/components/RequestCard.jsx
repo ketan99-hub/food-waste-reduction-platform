@@ -2,7 +2,7 @@ export default function RequestCard({ request }) {
   const isUrgent = request.people_count >= 5; // urgent logic
 
   return (
-<div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6">      {/* Urgent Badge */}
+<div className=" bg-transparent">      {/* Urgent Badge */}
       {isUrgent && (
         <span className="inline-block bg-red-500 text-white text-xs px-3 py-1 rounded-full mb-2">
           URGENT
