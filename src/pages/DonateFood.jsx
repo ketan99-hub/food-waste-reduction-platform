@@ -236,18 +236,17 @@ const submitDonation = async (e) => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 py-20 px-4">
+<div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-100 via-white to-green-200 px-4 py-20">  
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl p-10 border border-gray-100"
-      >
-       <h2 className="text-4xl font-extrabold text-center mb-3">
-   Donate Surplus Food
+className="w-full max-w-4xl bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-10"      >
+<h2 className="text-3xl font-bold text-green-700 text-center mb-3"> 
+    Donate Surplus Food
 </h2>
 
-<p className="text-center text-gray-500 mb-10">
-  Help reduce food waste by sharing excess food with those in need
+<p className="text-center text-gray-600 text-sm mb-10">
+    Help reduce food waste by sharing excess food with those in need
 </p>
 
         <form onSubmit={submitDonation} className="space-y-6">
@@ -256,8 +255,7 @@ className="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl p-10 border border-
  {donation.foodItems.map((food, index) => (
   <div
     key={index}
-    className="border border-green-200 rounded-xl p-5 space-y-4"
-  >
+className="border border-gray-300 rounded-lg p-5 space-y-4"  >
     
     <h4 className="font-semibold text-green-700">
       Food Item {index + 1}
@@ -590,8 +588,7 @@ handleFoodChange(index, "quantity", Number(e.target.value))
           {/* Submit */}
         <button
   type="submit"
-  className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-[1.02] transition"
->
+className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">
   Submit Donation
 </button>
 

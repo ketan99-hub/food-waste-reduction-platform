@@ -1,12 +1,13 @@
 #root {
-  background: red;
   width: 100%;
   margin: 0;
   padding: 0;
-  text-align: center;
-
 }
-
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
 .logo {
   height: 6em;
   padding: 1.5em;

@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
+import { FaUser, FaLock, FaLeaf } from "react-icons/fa";
+
 import { FaUser, FaLock, FaEnvelope, FaLeaf, FaPhone } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 
@@ -7,12 +11,20 @@ function AuthPage() {
 
   const [mobile, setMobile] = useState("");
   const [name, setName] = useState("");
+
+
+  async function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("donor");
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  if (!email || !password) {
+    alert("Please fill all fields!");
+    return;
+  }
 
     if (!email || !password || (!isLogin && (!name || !mobile))) {
       alert("Please fill all fields!");
@@ -29,7 +41,29 @@ function AuthPage() {
   const handleGoogleSignIn = () => {
     alert("Google Sign In Clicked (Firebase required)");
   };
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  // Optional: role-based redirect
+  if (role === "donor") {
+    navigate("/donor-dashboard");
+  } else if (role === "ngo") {
+    navigate("/ngo-dashboard");
+  } else if (role === "admin") {
+    navigate("/admin-dashboard");
+  } else {
+    navigate("/request-dashboard");
+  }
+
+alert(`Login Successful as ${role} 🎉`);};
+console.log("URL:", import.meta.env.VITE_SUPABASE_URL);
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50">
 

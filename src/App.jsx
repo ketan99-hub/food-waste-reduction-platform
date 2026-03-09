@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -7,7 +8,8 @@ import DonateFood from "./pages/DonateFood";
 import RequestFood from "./pages/RequestFood";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
-import Login from "./pages/Login"
+import Login from "./pages/Login";
+import NGODashboard from "./pages/NGODashboard";
 
 function App() {
   return (
@@ -20,7 +22,8 @@ function App() {
         <Route path="/features" element={<HowItWorks />} />
         <Route path="/donate" element={<DonateFood />} />
         <Route path="/request-food" element={<RequestFood />} />
-        <Route path="login" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/ngo-dashboard" element={<NGODashboard />} />
       </Routes>
 
       <Footer />

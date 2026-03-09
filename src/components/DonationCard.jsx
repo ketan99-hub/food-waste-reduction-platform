@@ -1,6 +1,7 @@
 export default function DonationCard({ donation }) {
   return (
-<div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6">      <h3 className="text-lg font-bold text-gray-800">
+<div className="bg-transparent backdrop-blur-md
+">      <h3 className="text-lg font-bold text-gray-800">
         🍛 {donation.food_type}
       </h3>
 
