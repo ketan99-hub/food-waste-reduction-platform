@@ -38,20 +38,14 @@ export default function Home() {
           "url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=1950&q=80')",
       }}
     >
-      {/* Hero Section */}
       <Hero />
 
-      {/* Cards Section */}
       <section className="relative z-10 -mt-40 px-6 py-16">
         <div className="max-w-6xl mx-auto">
 
-<<<<<<< HEAD
-      <Features />
-    
-          <h2 className="text-2xl font-bold text-center mb-6  bg-transparent">
-=======
-          <h2 className="text-2xl font-bold text-center mb-6 text-white">
->>>>>>> 693d207b0ae4f88960c91264ec4c436d2aa01a43
+          <Features />
+
+          <h2 className="text-2xl font-bold text-center mb-6 bg-transparent">
             Food Requests
           </h2>
 
