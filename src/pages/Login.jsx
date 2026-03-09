@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaLock, FaLeaf } from "react-icons/fa";
 
 import { FaUser, FaLock, FaEnvelope, FaLeaf, FaPhone } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
