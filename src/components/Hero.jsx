@@ -6,7 +6,7 @@ export default function Hero() {
 
   return (
   <section
-  className="relative min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center"
+className="relative h-[75vh] flex items-center justify-center bg-fixed bg-cover bg-center"
   style={{
     backgroundImage:
       "url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=1950&q=80')",
