@@ -26,7 +26,7 @@ export default function Navbar() {
             Home
           </NavLink>
 
-          <NavLink to="/features" className={linkClass}>
+          <NavLink to="/how-it-works" className={linkClass}>
             How it Works
           </NavLink>
           <NavLink to="/about" className={linkClass}>

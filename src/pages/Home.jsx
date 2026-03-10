@@ -43,7 +43,7 @@ export default function Home() {
       <section className="relative z-10 -mt-40 px-6 py-16">
         <div className="max-w-6xl mx-auto">
 
-          <Features />
+         
 
           <h2 className="text-2xl font-bold text-center mb-6 bg-transparent">
             Food Requests
