@@ -53,56 +53,60 @@ function AuthPage() {
         alert("NGO account waiting for admin approval");
         return;
       }
+      
 
-if (profile.role === "user") {
-  navigate("/user-dashboard");
-}
-else if (profile.role === "ngo") {
-  navigate("/ngo-dashboard");
-}
+navigate("/");
       return;
     }
 
     // REGISTER
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+  const { data, error } = await supabase.auth.signUp({
+  email,
+  password,
+});
 
-    if (error) {
-      alert(error.message);
-      return;
+if (error) {
+  alert(error.message);
+  return;
+}
+
+if (!data.user) {
+  alert("User creation failed");
+  return;
+}
+
+const user = data.user;
+
+const status = role === "ngo" ? "pending" : "approved";
+
+const { error: profileError } = await supabase
+  .from("profiles")
+  .insert([
+    {
+      id: user.id,
+      name: name,
+      mobile: mobile,
+      role: role,
+      ngo_address: ngoAddress,
+      ngo_reg: ngoReg,
+      status: status
     }
+  ]);
 
-    const user = data.user;
+if (profileError) {
+  alert(profileError.message);
+  return;
+}
 
-    const status = role === "ngo" ? "pending" : "approved";
+// NGO case
+if (role === "ngo") {
+  alert("NGO registered successfully. Wait for admin approval.");
+  return;
+}
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert([
-        {
-          id: user.id,
-          name,
-          mobile,
-          role,
-          ngo_address: ngoAddress,
-          ngo_reg: ngoReg,
-          status
-        }
-      ]);
-
-    if (profileError) {
-      alert(profileError.message);
-      return;
-    }
-
-    if (role === "ngo") {
-      alert("NGO registered. Wait for admin approval.");
-      return;
-    }
-
-    navigate("/donor-dashboard");
+// Normal user case
+alert("Registration successful 🎉");
+navigate("/");
   };
 
   const handleGoogleSignIn = async () => {
