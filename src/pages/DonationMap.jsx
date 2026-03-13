@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function DonationMap() {
@@ -7,6 +7,30 @@ export default function DonationMap() {
   const [donations, setDonations] = useState([]);
   const [addresses, setAddresses] = useState({});
   const [selectedDonation, setSelectedDonation] = useState(null);
+
+  const markerPoints = useMemo(() => {
+    return donations
+      .map((d) => {
+        const addr = addresses[d.address_id];
+        if (!addr?.latitude || !addr?.longitude) return null;
+        return {
+          donation: d,
+          lat: Number(addr.latitude),
+          lng: Number(addr.longitude),
+        };
+      })
+      .filter(Boolean);
+  }, [donations, addresses]);
+
+  const bounds = useMemo(() => {
+    if (!markerPoints.length) return null;
+    const lats = markerPoints.map((p) => p.lat);
+    const lngs = markerPoints.map((p) => p.lng);
+    return [
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)],
+    ];
+  }, [markerPoints]);
 
   useEffect(() => {
     fetchDonations();
@@ -76,10 +100,11 @@ const fetchAddresses = async () => {
 
     {donations.map((donation) => {
 
-      const item = donation.donation_items?.[0];
+      const items = donation.donation_items || [];
+      const firstItem = items[0];
       const address = addresses[donation.address_id];
 
-      if (!item) return null;
+      if (!firstItem) return null;
 
       return (
 
@@ -89,20 +114,20 @@ const fetchAddresses = async () => {
           className="bg-white p-5 rounded-xl shadow-md border cursor-pointer hover:shadow-lg transition"
         >
 
-          {item.image_url && (
+          {firstItem.image_url && (
             <img
-              src={item.image_url}
-              alt={item.food_name}
+              src={firstItem.image_url}
+              alt={firstItem.food_name}
               className="h-40 w-full object-cover rounded"
             />
           )}
 
           <h2 className="text-xl font-semibold text-green-700 mt-3">
-            🍛 {item.food_name}
+            🍛 {firstItem.food_name}
           </h2>
 
           <p className="text-gray-600">
-            📦 {item.quantity} meals
+            📦 {firstItem.quantity} meals{items.length > 1 ? ` • +${items.length - 1} more item${items.length - 1 === 1 ? "" : "s"}` : ""}
           </p>
 
           <p className="text-gray-600">
@@ -138,19 +163,23 @@ const fetchAddresses = async () => {
 
       {(() => {
 
-        const item = selectedDonation.donation_items?.[0];
+        const items = selectedDonation.donation_items || [];
         const address = addresses[selectedDonation.address_id];
 
         return (
 
           <>
             <h2 className="text-2xl font-bold text-green-700">
-              🍛 {item?.food_name}
+              🍛 {items[0]?.food_name}
             </h2>
 
-            <p className="text-gray-600 mt-3">
-              📦 Quantity: {item?.quantity}
-            </p>
+            <div className="text-gray-600 mt-3">
+              {items.map((itm, idx) => (
+                <p key={idx}>
+                  📦 {itm.quantity} × {itm.food_name}
+                </p>
+              ))}
+            </div>
 
             <p className="text-gray-600">
               📍 Location: {address?.city}
@@ -170,11 +199,19 @@ const fetchAddresses = async () => {
     {/* Right Side Map */}
 
     <MapContainer
-      center={[
-        addresses[selectedDonation.address_id]?.latitude || 21.1458,
-        addresses[selectedDonation.address_id]?.longitude || 79.0882
-      ]}
-      zoom={15}
+      bounds={bounds}
+      center={
+        selectedDonation
+          ? [
+              addresses[selectedDonation.address_id]?.latitude || 21.1458,
+              addresses[selectedDonation.address_id]?.longitude || 79.0882
+            ]
+          : [
+              addresses[donations[0]?.address_id]?.latitude || 21.1458,
+              addresses[donations[0]?.address_id]?.longitude || 79.0882
+            ]
+      }
+      zoom={12}
       style={{ height: "400px", width: "100%" }}
     >
 
@@ -183,21 +220,32 @@ const fetchAddresses = async () => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <Marker
-        position={[
-          addresses[selectedDonation.address_id]?.latitude || 21.1458,
-          addresses[selectedDonation.address_id]?.longitude || 79.0882
-        ]}
-      >
+      {markerPoints.map((point, index) => {
+        const addr = addresses[point.donation.address_id];
+        const items = point.donation.donation_items || [];
+        const firstItem = items[0];
 
-        <Popup>
+        // Offset markers slightly if multiple donations share the same coords
+        const offset = (index % 5) * 0.00006;
+        const lat = point.lat + offset;
+        const lng = point.lng + offset;
 
-          🍛 {selectedDonation.donation_items?.[0]?.food_name} <br />
-          📦 {selectedDonation.donation_items?.[0]?.quantity} meals
-
-        </Popup>
-
-      </Marker>
+        return (
+          <Marker key={point.donation.id} position={[lat, lng]}>
+            <Popup>
+              <div className="space-y-1">
+                <div className="font-semibold">{firstItem?.food_name || "Donation"}</div>
+                <div className="text-xs text-gray-600">
+                  {items.length} item{items.length === 1 ? "" : "s"}
+                </div>
+                <div className="text-xs">
+                  {addr?.city}, {addr?.area}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
 
     </MapContainer>
 

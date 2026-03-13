@@ -1,11 +1,13 @@
 import { supabase } from "../lib/supabase";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
 
 export default function DonateFood() {
 
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [donation, setDonation] = useState({
@@ -37,6 +39,34 @@ const addFoodItem = () => {
         image: null 
       }
     ]
+  });
+};
+
+const removeFoodItem = (index) => {
+  const updatedItems = donation.foodItems.filter((_, i) => i !== index);
+
+  // Never allow zero items
+  if (updatedItems.length === 0) {
+    setDonation({
+      ...donation,
+      foodItems: [
+        {
+          foodName: "",
+          category: "",
+          quantity: "",
+          cookedDate: "",
+          cookedTime: "",
+          expiryDate: "",
+          expiryTime: ""
+        }
+      ]
+    });
+    return;
+  }
+
+  setDonation({
+    ...donation,
+    foodItems: updatedItems
   });
 };
 async function uploadFoodImage(file) {
@@ -231,6 +261,7 @@ const user = userData.user;
     }
 
     alert("Donation saved successfully 🎉");
+    navigate("/map");
   } catch (error) {
     console.error("Error submitting donation:", error);
     alert("Error submitting donation. Please try again.");
@@ -243,7 +274,8 @@ const user = userData.user;
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-className="w-full max-w-4xl bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-10"      >
+        className="w-full max-w-4xl bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-10 max-h-[calc(100vh-5rem)] overflow-y-auto"
+      >
 <h2 className="text-3xl font-bold text-green-700 text-center mb-3"> 
     Donate Surplus Food
 </h2>
@@ -258,11 +290,22 @@ className="w-full max-w-4xl bg-white rounded-2xl shadow-lg hover:shadow-2xl tran
  {donation.foodItems.map((food, index) => (
   <div
     key={index}
-className="border border-gray-300 rounded-lg p-5 space-y-4"  >
+    className="border border-gray-300 rounded-lg p-5 space-y-4"
+  >
     
-    <h4 className="font-semibold text-green-700">
-      Food Item {index + 1}
-    </h4>
+    <div className="flex items-start justify-between gap-4">
+      <h4 className="font-semibold text-green-700">
+        Food Item {index + 1}
+      </h4>
+
+      <button
+        type="button"
+        onClick={() => removeFoodItem(index)}
+        className="text-sm text-red-600 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg"
+      >
+        Remove
+      </button>
+    </div>
 
     <input
       type="text"

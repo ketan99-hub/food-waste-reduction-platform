@@ -11,7 +11,7 @@ className="relative h-[75vh] flex items-center justify-center"
 >
 
       {/* Gradient overlay for readability & emotional impact */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/50"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-transparent"></div>
 
       {/* Content */}
       <div className="relative text-center px-6 max-w-5xl">
