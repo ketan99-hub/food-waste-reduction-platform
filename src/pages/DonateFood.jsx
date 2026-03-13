@@ -178,11 +178,14 @@ const submitDonation = async (e) => {
     console.log("ADDRESS SAVED ✅", addressData);
 
     // ❗ Create donation with address_id
+    const { data: userData } = await supabase.auth.getUser();
+const user = userData.user;
     const { data: donationData, error: donationError } = await supabase
       .from("donations")
       .insert({
         address_id: addressData.id,
         status: "pending",
+        user_id: user.id
       })
       .select()
       .single();

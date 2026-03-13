@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-
+import DonationMap from "./pages/DonationMap";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Profile from "./pages/Profile";
@@ -33,6 +33,7 @@ function App() {
 <Route path="/my-requests" element={<MyRequests />} />     
    <Route path="/ngo-dashboard" element={<NGODashboard />} />
    <Route path="/admin" element={<AdminDashboard />} />
+   <Route path="/map" element={<DonationMap />} />
       </Routes>
 
       <Footer />

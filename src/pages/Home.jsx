@@ -2,6 +2,7 @@ import Hero from "../components/Hero";
 import Features from "../components/Features";
 import RequestCard from "../components/RequestCard";
 import DonationCard from "../components/DonationCard";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
 
@@ -29,6 +30,7 @@ export default function Home() {
       quantity: 15,
     },
   ];
+  const navigate = useNavigate();
 
   return (
     <div
@@ -58,7 +60,12 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-center mt-14 mb-6 text-white">
             Available Donations
           </h2>
-
+<button
+  onClick={() => navigate("/map")}
+  className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+>
+  View Donation Map
+</button>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dummyDonations.map((don) => (
               <DonationCard key={don.id} donation={don} />

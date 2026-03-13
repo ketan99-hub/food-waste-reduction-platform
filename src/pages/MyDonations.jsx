@@ -1,103 +1,350 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 export default function MyDonations() {
 
   const [donations, setDonations] = useState([]);
+  const [addresses, setAddresses] = useState({});
   const [loading, setLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDonations();
+    (async () => {
+      await fetchDonations();
+      await fetchAddresses();
+    })();
   }, []);
 
   const fetchDonations = async () => {
 
-    setLoading(true);
-
-    // current user
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
 
     if (!user) return;
 
-    // fetch donations
     const { data, error } = await supabase
       .from("donations")
-      .select("*")
-      .eq("donor_id", user.id)
+      .select(`
+        id,
+        status,
+        created_at,
+        address_id,
+        donation_items (
+          id,
+          food_name,
+          category,
+          quantity,
+          image_url
+        )
+      `)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (!error) {
-      setDonations(data);
+    if (error) {
+      console.error("Error fetching donations:", error);
+    } else {
+      setDonations(data || []);
     }
 
     setLoading(false);
   };
 
+  const handleEdit = (donationId, item) => {
+    setEditingId(donationId);
+    setEditData({
+      id: item.id,
+      food_name: item.food_name,
+      category: item.category,
+      quantity: item.quantity
+    });
+  };
+
+  const fetchAddresses = async () => {
+    const { data, error } = await supabase
+      .from("addresses")
+      .select(`
+        id,
+        house,
+        area,
+        city,
+        pincode,
+        latitude,
+        longitude
+      `);
+
+    if (error) {
+      console.error("Error fetching addresses:", error);
+      return;
+    }
+
+    const addressMap = {};
+    data.forEach((addr) => {
+      addressMap[addr.id] = addr;
+    });
+
+    setAddresses(addressMap);
+  };
+
+  const handleSave = async () => {
+
+    const { error } = await supabase
+      .from("donation_items")
+      .update({
+        food_name: editData.food_name,
+        category: editData.category,
+        quantity: editData.quantity
+      })
+      .eq("id", editData.id);
+
+    if (error) {
+      alert("Update failed");
+      console.error(error);
+      return;
+    }
+
+    alert("Donation updated ✅");
+
+    setEditingId(null);
+    fetchDonations();
+  };
+
+  const deleteDonation = async (donationId) => {
+
+    if (!confirm("Delete this donation?")) return;
+
+    const { error } = await supabase
+      .from("donations")
+      .delete()
+      .eq("id", donationId);
+
+    if (error) {
+      alert("Delete failed");
+      console.error(error);
+      return;
+    }
+
+    fetchDonations();
+  };
+
   if (loading) {
     return (
-      <div className="pt-28 text-center">
-        <p>Loading donations...</p>
+      <div className="pt-28 text-center text-lg">
+        Loading your donations...
       </div>
     );
   }
 
   return (
+
     <div className="pt-28 min-h-screen bg-gray-50">
 
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
 
-        <h1 className="text-3xl font-bold text-green-700 mb-6">
-          My Donations
-        </h1>
+        {/* Header */}
+
+        <div className="flex justify-between items-center mb-8">
+
+          <h1 className="text-3xl font-bold text-green-700">
+            My Donations
+          </h1>
+
+          <button
+            onClick={() => navigate("/donate")}
+            className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            + Donate Food
+          </button>
+
+        </div>
 
         {donations.length === 0 ? (
 
-          <p className="text-gray-500">
+          <div className="text-center text-gray-500 text-lg">
             You haven't donated food yet.
-          </p>
+          </div>
 
         ) : (
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {donations.map((donation) => (
+            {donations.map((donation) =>
+              donation.donation_items.map((item) => {
 
-              <div
-                key={donation.id}
-                className="bg-white shadow-md rounded-xl p-5 border"
-              >
+                const address = addresses[donation.address_id];
 
-                <h2 className="text-xl font-semibold text-green-700">
-                  🍛 {donation.food_type}
-                </h2>
+                return (
 
-                <p className="text-gray-600 mt-2">
-                  📍 {donation.location}
-                </p>
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl shadow-md border hover:shadow-lg transition overflow-hidden"
+                  >
 
-                <p className="text-gray-600">
-                  📦 {donation.quantity} meals
-                </p>
+                    {/* Image */}
 
-                <p className="text-gray-600">
-                  ⏰ {donation.pickup_time}
-                </p>
+                    {item.image_url && (
+                      <img
+                        src={item.image_url}
+                        alt={item.food_name}
+                        className="h-48 w-full object-cover cursor-pointer"
+                        onClick={() => setPreviewImage(item.image_url)}
+                      />
+                    )}
 
-                <div className="mt-3 text-sm text-gray-500">
-                  Status: {donation.status}
-                </div>
+                    <div className="p-5">
 
-              </div>
+                      {/* Food Name */}
 
-            ))}
+                      {editingId === donation.id ? (
+                        <input
+                          value={editData.food_name}
+                          onChange={(e) =>
+                            setEditData({ ...editData, food_name: e.target.value })
+                          }
+                          className="border p-2 rounded w-full"
+                        />
+                      ) : (
+                        <h2 className="text-xl font-semibold text-green-700">
+                          🍛 {item.food_name}
+                        </h2>
+                      )}
+
+                      {/* Category */}
+
+                      {editingId === donation.id ? (
+                        <input
+                          value={editData.category}
+                          onChange={(e) =>
+                            setEditData({ ...editData, category: e.target.value })
+                          }
+                          className="border p-2 rounded w-full mt-2"
+                        />
+                      ) : (
+                        <p className="text-gray-600 mt-2">
+                          Category: {item.category}
+                        </p>
+                      )}
+
+                      {/* Quantity */}
+
+                      {editingId === donation.id ? (
+                        <input
+                          type="number"
+                          value={editData.quantity}
+                          onChange={(e) =>
+                            setEditData({ ...editData, quantity: e.target.value })
+                          }
+                          className="border p-2 rounded w-full mt-2"
+                        />
+                      ) : (
+                        <p className="text-gray-600">
+                          Quantity: {item.quantity}
+                        </p>
+                      )}
+
+                      {/* Address */}
+
+                      <p className="text-gray-600 mt-2">
+                        📍 {address?.house}, {address?.area}, {address?.city}
+                      </p>
+
+                      {/* Status */}
+
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium mt-2 inline-block ${
+                          donation.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : donation.status === "claimed"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {donation.status}
+                      </span>
+
+                      {/* Progress Bar */}
+
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div
+                          className={`h-2 rounded-full ${
+                            donation.status === "pending"
+                              ? "bg-yellow-500 w-1/3"
+                              : donation.status === "claimed"
+                              ? "bg-blue-500 w-2/3"
+                              : "bg-green-500 w-full"
+                          }`}
+                        ></div>
+                      </div>
+
+                      <p className="text-gray-400 text-xs mt-2">
+                        {new Date(donation.created_at).toLocaleDateString()}
+                      </p>
+
+                      {/* Buttons */}
+
+                      <div className="flex gap-2 mt-4">
+
+                        {editingId === donation.id ? (
+
+                          <button
+                            onClick={handleSave}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Save
+                          </button>
+
+                        ) : (
+
+                          <button
+                            onClick={() => handleEdit(donation.id, item)}
+                            className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Edit
+                          </button>
+
+                        )}
+
+                        <button
+                          onClick={() => deleteDonation(donation.id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Delete
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                );
+
+              })
+            )}
 
           </div>
 
         )}
 
       </div>
+
+      {/* Image Popup */}
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            className="max-h-[90%] max-w-[90%] rounded-lg"
+          />
+        </div>
+      )}
 
     </div>
   );
