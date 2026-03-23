@@ -6,6 +6,7 @@ export default function MyDonations() {
 
   const [donations, setDonations] = useState([]);
   const [addresses, setAddresses] = useState({});
+  const [claims, setClaims] = useState({});
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -20,6 +21,10 @@ export default function MyDonations() {
     })();
   }, []);
 
+  useEffect(() => {
+    fetchClaims();
+  }, [donations]);
+
   const fetchDonations = async () => {
 
     const { data: userData } = await supabase.auth.getUser();
@@ -31,6 +36,7 @@ export default function MyDonations() {
       .from("donations")
       .select(`
         id,
+        user_id,
         status,
         created_at,
         address_id,
@@ -52,6 +58,30 @@ export default function MyDonations() {
     }
 
     setLoading(false);
+  };
+
+  const fetchClaims = async () => {
+    if (!donations.length) return;
+
+    const donationIds = donations.map((d) => d.id);
+
+    const { data, error } = await supabase
+      .from("claims")
+      .select("id, donation_id, claimer_id, status, created_at, claimer:profiles!claimer_id(id, name, role)")
+      .in("donation_id", donationIds);
+
+    if (error) {
+      console.error("Error fetching claims:", error);
+      return;
+    }
+
+    const claimsMap = {};
+    (data || []).forEach((claim) => {
+      if (!claimsMap[claim.donation_id]) claimsMap[claim.donation_id] = [];
+      claimsMap[claim.donation_id].push(claim);
+    });
+
+    setClaims(claimsMap);
   };
 
   const handleEdit = (donationId, item) => {
@@ -110,6 +140,78 @@ export default function MyDonations() {
     alert("Donation updated ✅");
 
     setEditingId(null);
+    fetchDonations();
+  };
+
+  const handleApproveClaim = async (claim) => {
+    // Mark this claim approved and set donation status to claimed.
+    const { error: approveError } = await supabase
+      .from("claims")
+      .update({ status: "approved" })
+      .eq("id", claim.id);
+
+    if (approveError) {
+      alert("Unable to approve claim");
+      console.error(approveError);
+      return;
+    }
+
+    const { error: donationError } = await supabase
+      .from("donations")
+      .update({ status: "claimed" })
+      .eq("id", claim.donation_id);
+
+    if (donationError) {
+      alert("Unable to update donation status");
+      console.error(donationError);
+      return;
+    }
+
+    // Reject any other pending claims for this donation
+    const { error: rejectError } = await supabase
+      .from("claims")
+      .update({ status: "rejected" })
+      .eq("donation_id", claim.donation_id)
+      .neq("id", claim.id)
+      .eq("status", "pending");
+
+    if (rejectError) {
+      console.error("Unable to reject remaining claims", rejectError);
+    }
+
+    alert("Claim approved! Donation is now claimed.");
+    fetchDonations();
+    fetchClaims();
+  };
+
+  const handleRejectClaim = async (claim) => {
+    const { error } = await supabase
+      .from("claims")
+      .update({ status: "rejected" })
+      .eq("id", claim.id);
+
+    if (error) {
+      alert("Unable to reject claim");
+      console.error(error);
+      return;
+    }
+
+    alert("Claim rejected.");
+    fetchClaims();
+  };
+
+  const updateDonationStatus = async (donationId, status) => {
+    const { error } = await supabase
+      .from("donations")
+      .update({ status })
+      .eq("id", donationId);
+
+    if (error) {
+      alert("Unable to update donation status");
+      console.error(error);
+      return;
+    }
+
     fetchDonations();
   };
 
@@ -284,9 +386,53 @@ export default function MyDonations() {
                         {new Date(donation.created_at).toLocaleDateString()}
                       </p>
 
+                      {/* Claim Requests */}
+                      {claims[donation.id] && claims[donation.id].length > 0 && (
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold">Claim Requests</h3>
+                          </div>
+                          {claims[donation.id].map((claim) => (
+                            <div
+                              key={claim.id}
+                              className="flex items-center justify-between gap-2 mt-3"
+                            >
+                              <div className="text-sm text-gray-700">
+                                <span className="font-semibold">
+                                  {claim.claimer?.name || "Unknown"}
+                                </span>
+                                <span className="text-xs text-gray-500 ml-1">
+                                  ({claim.claimer?.role || "user"})
+                                </span>
+                                <span className="ml-2 text-xs uppercase text-gray-500">
+                                  {claim.status}
+                                </span>
+                              </div>
+
+                              {donation.status === "pending" && claim.status === "pending" ? (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleApproveClaim(claim)}
+                                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectClaim(claim)}
+                                    className="bg-red-500 text-white px-2 py-1 rounded text-xs"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Buttons */}
 
-                      <div className="flex gap-2 mt-4">
+                      <div className="flex flex-wrap gap-2 mt-4">
 
                         {editingId === donation.id ? (
 
@@ -314,6 +460,24 @@ export default function MyDonations() {
                         >
                           Delete
                         </button>
+
+                        {donation.status === "claimed" && (
+                          <button
+                            onClick={() => updateDonationStatus(donation.id, "picked_up")}
+                            className="bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Mark picked up
+                          </button>
+                        )}
+
+                        {donation.status === "picked_up" && (
+                          <button
+                            onClick={() => updateDonationStatus(donation.id, "completed")}
+                            className="bg-emerald-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Mark completed
+                          </button>
+                        )}
 
                       </div>
 

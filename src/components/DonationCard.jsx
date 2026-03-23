@@ -1,4 +1,13 @@
-export default function DonationCard({ donation }) {
+import { useNavigate } from "react-router-dom";
+
+export default function DonationCard({ donation, onClaim }) {
+  const navigate = useNavigate();
+
+  const handleClaim = () => {
+    // Navigate to donation map instead of claiming directly
+    navigate("/map");
+  };
+
   return (
 <div className="bg-transparent backdrop-blur-md
 ">      <h3 className="text-lg font-bold text-gray-800">
@@ -14,7 +23,10 @@ export default function DonationCard({ donation }) {
         </p>
       )}
 
-      <button className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+      <button
+        onClick={handleClaim}
+        className="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+      >
         Claim Food
       </button>
     </div>

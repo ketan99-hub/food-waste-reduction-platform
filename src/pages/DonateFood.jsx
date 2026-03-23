@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabase";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
@@ -8,7 +8,46 @@ import { useRef } from "react";
 export default function DonateFood() {
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestId = location?.state?.requestId;
   const fileInputRef = useRef(null);
+
+  const [requestContext, setRequestContext] = useState(null);
+  const [requestLoading, setRequestLoading] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        alert("Please login to donate food");
+        navigate("/login");
+      }
+    };
+    checkUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!requestId) return;
+
+    const fetchRequest = async () => {
+      setRequestLoading(true);
+      const { data, error } = await supabase
+        .from("food_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+
+      if (error) {
+        console.error("Failed to load request context:", error);
+        setRequestContext(null);
+      } else {
+        setRequestContext(data);
+      }
+      setRequestLoading(false);
+    };
+
+    fetchRequest();
+  }, [requestId]);
 
   const [donation, setDonation] = useState({
   foodItems: [
@@ -175,6 +214,15 @@ const submitDonation = async (e) => {
   try {
     e.preventDefault();
 
+    // Check if user is authenticated
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) {
+      alert("Please login to donate food");
+      navigate("/login");
+      return;
+    }
+
     // 🔴 safety check (important)
     if (addressMode === "manual" && !address.full_name) {
       alert("Please fill address details");
@@ -207,13 +255,16 @@ const submitDonation = async (e) => {
 
     console.log("ADDRESS SAVED ✅", addressData);
 
+    const addressId = addressData?.id;
+    if (!addressId) {
+      throw new Error("Address insert failed: no id returned");
+    }
+
     // ❗ Create donation with address_id
-    const { data: userData } = await supabase.auth.getUser();
-const user = userData.user;
     const { data: donationData, error: donationError } = await supabase
       .from("donations")
       .insert({
-        address_id: addressData.id,
+        address_id: addressId,
         status: "pending",
         user_id: user.id
       })
@@ -227,6 +278,12 @@ const user = userData.user;
 
     console.log("DONATION SAVED ✅", donationData);
     console.log("DONATION ID 👉", donationData?.id);
+
+    const donationId = donationData?.id;
+    if (!donationId) {
+      throw new Error("Donation insert failed: no id returned");
+    }
+
     console.log("FOOD ITEMS 👉", donation.foodItems);
 
     const itemsToInsert = [];
@@ -239,7 +296,7 @@ const user = userData.user;
       }
 
       itemsToInsert.push({
-        donation_id: donationData.id,
+        donation_id: donationId,
         food_name: food.foodName,
         category: food.category,
         quantity: Number(food.quantity),
@@ -258,6 +315,19 @@ const user = userData.user;
     if (itemsError) {
       console.error("DONATION ITEMS ERROR 👉", itemsError);
       throw itemsError;
+    }
+
+    if (requestId) {
+      const { error: reqError } = await supabase
+        .from("food_requests")
+        .update({ status: "accepted" })
+        .eq("id", requestId);
+
+      if (reqError) {
+        console.warn("Could not update request status after donation:", reqError);
+      } else {
+        console.log("Request marked accepted via donation context.");
+      }
     }
 
     alert("Donation saved successfully 🎉");
@@ -283,6 +353,18 @@ const user = userData.user;
 <p className="text-center text-gray-600 text-sm mb-10">
     Help reduce food waste by sharing excess food with those in need
 </p>
+
+        {requestId && (
+          <div className="mb-4 rounded-lg border-l-4 border-green-500 bg-green-50 px-4 py-3 text-sm text-green-750">
+            {requestLoading ? "Loading request context..." : requestContext ? (
+              <>
+                You are donating for: <strong>{requestContext.name}</strong> ({requestContext.people_count} people) at <strong>{requestContext.address}</strong>.
+              </>
+            ) : (
+              "This donation is linked to a request, but request details could not be loaded."
+            )}
+          </div>
+        )}
 
         <form onSubmit={submitDonation} className="space-y-6">
 

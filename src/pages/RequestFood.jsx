@@ -62,10 +62,19 @@ const getLocation = () => {
     setStep("form");
   };
 
-  const submitRequest = async () => {
+  const submitRequest = async (e) => {
+    e.preventDefault();
 
 if (!form.name || !form.address || !form.people || !form.latitude) {
         alert("Please fill all required fields");
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+
+    if (!user) {
+      alert("Please login to submit a request");
       return;
     }
 
@@ -83,7 +92,8 @@ if (!form.name || !form.address || !form.people || !form.latitude) {
           urgency: form.urgency,
           notes: form.notes,
           latitude: form.latitude,
-          longitude: form.longitude
+          longitude: form.longitude,
+          user_id: user.id
         }
       ]);
 
@@ -251,7 +261,7 @@ console.log("RequestFood component loaded");
 
         {step === "form" && (
           
-          <div className="space-y-4">
+          <form onSubmit={submitRequest} className="space-y-4">
 
             <input
               placeholder="Full Name"
@@ -267,6 +277,7 @@ console.log("RequestFood component loaded");
               className="w-full p-3 border rounded-xl"
             />
               <button
+              type="button"
               onClick={getLocation}
               className="bg-green-500 text-white px-3 py-2 rounded"
               >
@@ -313,7 +324,7 @@ console.log("RequestFood component loaded");
             />
 
             <button
-              onClick={submitRequest}
+              type="submit"
               disabled={loading}
 className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300">
             
@@ -325,7 +336,7 @@ className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg
   </p>
 )}
 
-          </div>
+          </form>
 
         )}
 

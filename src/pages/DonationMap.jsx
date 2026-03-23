@@ -7,6 +7,9 @@ export default function DonationMap() {
   const [donations, setDonations] = useState([]);
   const [addresses, setAddresses] = useState({});
   const [selectedDonation, setSelectedDonation] = useState(null);
+  const [user, setUser] = useState(null);
+  const [claims, setClaims] = useState({});
+  const [claiming, setClaiming] = useState(false);
 
   const markerPoints = useMemo(() => {
     return donations
@@ -33,14 +36,76 @@ export default function DonationMap() {
   }, [markerPoints]);
 
   useEffect(() => {
+    fetchUser();
     fetchDonations();
     fetchAddresses();
   }, []);
-const fetchDonations = async () => {
+
+  useEffect(() => {
+    fetchClaims();
+  }, [donations]);
+
+  const fetchUser = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    setUser(userData.user);
+  };
+
+  const fetchClaims = async () => {
+    if (!donations.length) return;
+
+    const donationIds = donations.map((d) => d.id);
+
+    const { data, error } = await supabase
+      .from("claims")
+      .select(
+        `id, donation_id, claimer_id, status, created_at, claimer:profiles!claimer_id(id, name, role)`
+      )
+      .in("donation_id", donationIds);
+
+    if (error) {
+      console.error("Error fetching claims:", error.message || error);
+      return;
+    }
+
+    const claimsMap = {};
+    (data || []).forEach((claim) => {
+      if (!claimsMap[claim.donation_id]) claimsMap[claim.donation_id] = [];
+      claimsMap[claim.donation_id].push(claim);
+    });
+
+    setClaims(claimsMap);
+  };
+
+  const handleClaimDonation = async (donation) => {
+    if (!user || !donation) return;
+
+    setClaiming(true);
+
+    const { error } = await supabase.from("claims").insert({
+      donation_id: donation.id,
+      claimer_id: user.id,
+      status: "pending"
+    });
+
+    setClaiming(false);
+
+    if (error) {
+      alert("Claim failed. Please try again.");
+      console.error("Claim error:", error);
+      return;
+    }
+
+    alert("Claim request submitted successfully! The donor has been notified and will review it soon. Needy people will be helped through this donation.");
+    await fetchDonations();
+    fetchClaims();
+  };
+
+  const fetchDonations = async () => {
   const { data, error } = await supabase
     .from("donations")
     .select(`
       id,
+      user_id,
       status,
       created_at,
       address_id,
@@ -134,6 +199,28 @@ const fetchAddresses = async () => {
             📍 {address?.city || "Location not available"}
           </p>
 
+          {/* Claim Button */}
+          {user && user.id !== donation.user_id && donation.status === "pending" && (
+            <div onClick={(e) => e.stopPropagation()} className="mt-3">
+              {claims[donation.id]?.some(c => c.claimer_id === user.id) ? (
+                <button
+                  disabled
+                  className="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold cursor-not-allowed"
+                >
+                  Claim Requested
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleClaimDonation(donation)}
+                  disabled={claiming}
+                  className="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+                >
+                  {claiming ? "Sending Request..." : "Claim Donation"}
+                </button>
+              )}
+            </div>
+          )}
+
         </div>
 
       );
@@ -188,6 +275,58 @@ const fetchAddresses = async () => {
             <p className="text-gray-600">
               Status: {selectedDonation.status}
             </p>
+
+            {/* Claim Section */}
+            {user && user.id !== selectedDonation.user_id && (
+              <div className="mt-4 border-t pt-4">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Claim this donation
+                </h3>
+
+                {selectedDonation.status !== "pending" ? (
+                  <p className="text-sm text-gray-600 mt-2">
+                    This donation is already <span className="font-semibold">{selectedDonation.status}</span>.
+                  </p>
+                ) : (
+                  <>
+                    {claims[selectedDonation.id]?.some(
+                      (c) => c.claimer_id === user.id
+                    ) ? (
+                      <button
+                        disabled
+                        className="mt-2 w-full bg-gray-400 text-white py-3 rounded-xl font-semibold cursor-not-allowed"
+                      >
+                        Claim Requested
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleClaimDonation(selectedDonation)}
+                        disabled={claiming}
+                        className="mt-2 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+                      >
+                        {claiming ? "Sending Request..." : "Claim Donation"}
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {claims[selectedDonation.id] && (
+                  <div className="mt-4 bg-gray-50 p-3 rounded-lg">
+                    <h4 className="text-sm font-semibold">Recent claims</h4>
+                    {claims[selectedDonation.id].map((claim) => (
+                      <div
+                        key={claim.id}
+                        className="mt-2 text-sm text-gray-700"
+                      >
+                        {claim.claimer?.name || "Unknown"} (
+                        {claim.claimer?.role || "user"}) – {claim.status}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </>
 
         );

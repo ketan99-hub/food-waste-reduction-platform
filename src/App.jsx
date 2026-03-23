@@ -8,6 +8,7 @@ import MyRequests from "./pages/MyRequests";
 import Home from "./pages/Home";
 import DonateFood from "./pages/DonateFood";
 import RequestFood from "./pages/RequestFood";
+import RequestDetail from "./pages/RequestDetail";
 import About from "./pages/About";
 import HowItWorks from "./pages/HowItWorks";
 import Login from "./pages/Login";
@@ -31,9 +32,7 @@ function App() {
 <Route path="/profile" element={<Profile />} />
 <Route path="/my-donations" element={<MyDonations />} />
 <Route path="/my-requests" element={<MyRequests />} />     
-   <Route path="/ngo-dashboard" element={<NGODashboard />} />
-   <Route path="/admin" element={<AdminDashboard />} />
-   <Route path="/map" element={<DonationMap />} />
+   <Route path="/requests/:id" element={<RequestDetail />} />
       </Routes>
 
       <Footer />
