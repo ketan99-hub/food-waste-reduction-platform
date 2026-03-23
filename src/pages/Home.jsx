@@ -88,7 +88,25 @@ export default function Home() {
       setLoading(false);
     })();
   }, []);
+const handleClaimDonation = async (donationId) => {
+  try {
+    const { data, error } = await supabase
+      .from("claims")
+      .insert([
+        {
+          donation_id: donationId,
+          claimer_id: "USER_ID_HERE", // replace with logged-in user
+        },
+      ]);
 
+    if (error) throw error;
+
+    alert("✅ Donation claimed successfully!");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to claim donation");
+  }
+};
   useEffect(() => {
     const requestChannel = supabase
       .channel("food_requests_home")
