@@ -43,7 +43,9 @@ export default function Home() {
           food_name,
           category,
           quantity,
-          image_url
+          image_url,
+          cooked_time,
+          expiry_time
         )
       `)
       .order("created_at", { ascending: false });
@@ -141,7 +143,7 @@ const handleClaimDonation = async (donationId) => {
       <Hero />
 
       <section className="relative z-10 -mt-40 px-6 py-16">
-        <div className={`max-w-4xl mx-auto ${isBlurred ? "filter blur-sm" : ""}`}>
+        <div className="max-w-4xl mx-auto">
 
           <div className="space-y-12">
             <div>
@@ -182,7 +184,7 @@ const handleClaimDonation = async (donationId) => {
                 <p className="text-white">No donations are available yet.</p>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {donations.slice(0, 2).map((donation) => {
                       const item = donation.donation_items?.[0] || {};
                       const location = addresses[donation.address_id]?.city || "Unknown";
@@ -195,6 +197,8 @@ const handleClaimDonation = async (donationId) => {
                             location,
                             quantity: item.quantity || "N/A",
                             status: donation.status,
+                            cookedTime: item.cooked_time,
+                            expiryTime: item.expiry_time,
                           }}
                           onClaim={handleClaimDonation}
                         />
@@ -202,21 +206,19 @@ const handleClaimDonation = async (donationId) => {
                     })}
                   </div>
 
-                  {donations.length > 2 && (
-                    <button
-                      onClick={() => setModalView("donations")}
-                      className="w-full mt-4 bg-white text-purple-700 border border-purple-600 py-2 rounded-lg font-semibold hover:bg-purple-50"
-                    >
-                      View All Donations
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setModalView("donations")}
+                    className="w-full mt-4 bg-white text-green-700 border border-green-600 py-2 rounded-lg font-semibold hover:bg-green-50"
+                  >
+                    View All Donations
+                  </button>
                 </>
               )}
             </div>
           </div>
 
           {modalView && (
-            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
               <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl border border-gray-200 relative">
                 <button
                   onClick={() => setModalView(null)}
@@ -256,6 +258,8 @@ const handleClaimDonation = async (donationId) => {
                               location,
                               quantity: item.quantity || "N/A",
                               status: donation.status,
+                              cookedTime: item.cooked_time,
+                              expiryTime: item.expiry_time,
                             }}
                             onClaim={handleClaimDonation}
                           />

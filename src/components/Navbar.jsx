@@ -136,6 +136,13 @@ const navigate = useNavigate();
     </button>
 
     <button
+      onClick={() => navigate("/my-claims")}
+      className="block w-full text-left px-4 py-2 hover:bg-gray-100 border-t"
+    >
+      🛒 My Claims
+    </button>
+
+    <button
       onClick={logout}
       className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
     >

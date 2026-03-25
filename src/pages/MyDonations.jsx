@@ -15,14 +15,24 @@ export default function MyDonations() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
-      await fetchDonations();
-      await fetchAddresses();
-    })();
+    fetchDonations();
+    fetchAddresses();
   }, []);
 
   useEffect(() => {
     fetchClaims();
+
+    // Real-time subscription for claims
+    const claimsChannel = supabase
+      .channel("claims_updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "claims" },
+        () => fetchClaims()
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(claimsChannel);
   }, [donations]);
 
   const fetchDonations = async () => {
@@ -67,7 +77,7 @@ export default function MyDonations() {
 
     const { data, error } = await supabase
       .from("claims")
-      .select("id, donation_id, claimer_id, status, created_at, claimer:profiles!claimer_id(id, name, role)")
+      .select("id, donation_id, claimer_id, status, created_at, claimer:profiles!claimer_id(id, name, role, mobile)")
       .in("donation_id", donationIds);
 
     if (error) {
@@ -179,7 +189,7 @@ export default function MyDonations() {
       console.error("Unable to reject remaining claims", rejectError);
     }
 
-    alert("Claim approved! Donation is now claimed.");
+    alert(`✅ Claim approved!\n\nPickup Details:\n📍 Recipient: ${claim.claimer?.name || "Recipient"}\n📞 Phone: ${claim.claimer?.mobile || "Not provided"}\n\nPlease coordinate with the recipient for food pickup.`);
     fetchDonations();
     fetchClaims();
   };
@@ -389,44 +399,52 @@ export default function MyDonations() {
                       {/* Claim Requests */}
                       {claims[donation.id] && claims[donation.id].length > 0 && (
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold">Claim Requests</h3>
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold">📋 Claim Requests ({claims[donation.id].length})</h3>
                           </div>
-                          {claims[donation.id].map((claim) => (
-                            <div
-                              key={claim.id}
-                              className="flex items-center justify-between gap-2 mt-3"
-                            >
-                              <div className="text-sm text-gray-700">
-                                <span className="font-semibold">
-                                  {claim.claimer?.name || "Unknown"}
-                                </span>
-                                <span className="text-xs text-gray-500 ml-1">
-                                  ({claim.claimer?.role || "user"})
-                                </span>
-                                <span className="ml-2 text-xs uppercase text-gray-500">
-                                  {claim.status}
-                                </span>
-                              </div>
-
-                              {donation.status === "pending" && claim.status === "pending" ? (
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleApproveClaim(claim)}
-                                    className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleRejectClaim(claim)}
-                                    className="bg-red-500 text-white px-2 py-1 rounded text-xs"
-                                  >
-                                    Reject
-                                  </button>
+                          <div className="space-y-3">
+                            {claims[donation.id].map((claim) => (
+                              <div
+                                key={claim.id}
+                                className="bg-white p-3 rounded-lg border border-gray-200"
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="text-sm">
+                                    <p className="font-semibold text-gray-800">
+                                      {claim.claimer?.name || "Unknown"}
+                                    </p>
+                                    <p className="text-xs text-gray-600">
+                                      📞 {claim.claimer?.mobile || "Not provided"}
+                                    </p>
+                                  </div>
+                                  <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                                    claim.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                                    claim.status === "approved" ? "bg-green-100 text-green-700" :
+                                    "bg-red-100 text-red-700"
+                                  }`}>
+                                    {claim.status?.toUpperCase()}
+                                  </span>
                                 </div>
-                              ) : null}
-                            </div>
-                          ))}
+
+                                {donation.status === "pending" && claim.status === "pending" ? (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleApproveClaim(claim)}
+                                      className="flex-1 bg-green-600 text-white px-2 py-1.5 rounded text-xs font-semibold hover:bg-green-700"
+                                    >
+                                      ✅ Approve
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectClaim(claim)}
+                                      className="flex-1 bg-red-500 text-white px-2 py-1.5 rounded text-xs font-semibold hover:bg-red-600"
+                                    >
+                                      ❌ Reject
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -438,48 +456,69 @@ export default function MyDonations() {
 
                           <button
                             onClick={handleSave}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm font-semibold"
                           >
-                            Save
+                            ✅ Save
                           </button>
 
                         ) : (
 
                           <button
                             onClick={() => handleEdit(donation.id, item)}
-                            className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                            className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-semibold"
                           >
-                            Edit
+                            ✏️ Edit
                           </button>
 
                         )}
 
-                        <button
-                          onClick={() => deleteDonation(donation.id)}
-                          className="bg-red-500 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Delete
-                        </button>
-
-                        {donation.status === "claimed" && (
+                        {donation.status !== "completed" && (
                           <button
-                            onClick={() => updateDonationStatus(donation.id, "picked_up")}
-                            className="bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+                            onClick={() => deleteDonation(donation.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded text-sm font-semibold"
                           >
-                            Mark picked up
-                          </button>
-                        )}
-
-                        {donation.status === "picked_up" && (
-                          <button
-                            onClick={() => updateDonationStatus(donation.id, "completed")}
-                            className="bg-emerald-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Mark completed
+                            🗑️ Delete
                           </button>
                         )}
 
                       </div>
+
+                      {/* Status-specific Actions */}
+                      {donation.status === "claimed" && (
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-300 rounded-lg">
+                          <p className="text-sm text-blue-800 font-semibold mb-3">
+                            📍 Recipient has claimed the food. Confirm once they've picked it up:
+                          </p>
+                          <button
+                            onClick={() => updateDonationStatus(donation.id, "picked_up")}
+                            className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-semibold transition"
+                          >
+                            ✓ Mark as Picked Up
+                          </button>
+                        </div>
+                      )}
+
+                      {donation.status === "picked_up" && (
+                        <div className="mt-4 p-3 bg-emerald-50 border border-emerald-300 rounded-lg">
+                          <p className="text-sm text-emerald-800 font-semibold mb-3">
+                            🎉 Food has been picked up! Mark as completed:
+                          </p>
+                          <button
+                            onClick={() => updateDonationStatus(donation.id, "completed")}
+                            className="w-full bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 text-sm font-semibold transition"
+                          >
+                            ✅ Mark as Completed
+                          </button>
+                        </div>
+                      )}
+
+                      {donation.status === "completed" && (
+                        <div className="mt-4 p-3 bg-green-50 border border-green-300 rounded-lg">
+                          <p className="text-sm text-green-800 font-semibold">
+                            ✨ This donation is complete! Thank you for reducing food waste.
+                          </p>
+                        </div>
+                      )}
 
                     </div>
 
